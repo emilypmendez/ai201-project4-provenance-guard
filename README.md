@@ -2,6 +2,8 @@
 
 A backend attribution analysis system for creative platforms. Accepts text submissions, classifies them as human-written or AI-generated using a three-signal detection pipeline, returns a transparency label, and handles creator appeals.
 
+Watch the 6 minute overview: https://youtu.be/aq_jO0So754
+
 ---
 
 ## Setup
