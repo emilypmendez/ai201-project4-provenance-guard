@@ -76,12 +76,12 @@ def appeal():
     body = request.get_json(silent=True) or {}
     content_id = body.get("content_id", "").strip()
     creator_id = body.get("creator_id", "anonymous")
-    reasoning = body.get("reasoning", "").strip()
+    reasoning = (body.get("creator_reasoning") or body.get("reasoning", "")).strip()
 
     if not content_id:
         return jsonify({"error": "content_id is required"}), 400
     if not reasoning:
-        return jsonify({"error": "reasoning is required"}), 400
+        return jsonify({"error": "creator_reasoning is required"}), 400
 
     submission = audit_log.get_submission(content_id)
     if not submission:
