@@ -358,8 +358,8 @@ The combined score is then shifted slightly toward 0.5 on the human side — spe
 
 **Label thresholds:**
 - `score < 0.40` → **high-confidence human**
-- `0.40 ≤ score < 0.75` → **uncertain**
-- `score ≥ 0.75` → **high-confidence AI**
+- `0.40 ≤ score < 0.73` → **uncertain**
+- `score ≥ 0.73` → **high-confidence AI**
 
 The wide uncertain band (35 percentage points) is intentional — it acknowledges that current detection is genuinely unreliable in the middle range.
 

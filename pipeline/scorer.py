@@ -5,7 +5,7 @@ WEIGHTS = {"llm": 0.50, "stylo": 0.25, "burst": 0.25}
 
 # Label thresholds
 THRESHOLD_HUMAN = 0.40
-THRESHOLD_AI = 0.75
+THRESHOLD_AI = 0.73
 
 LABEL_HUMAN = {
     "verdict": "Likely written by a human.",

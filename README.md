@@ -125,8 +125,8 @@ If the burstiness signal is unreliable (text too short), the weight is redistrib
 | Combined score | Attribution | Label |
 |---|---|---|
 | < 0.40 | `human` | High-confidence human |
-| 0.40 – 0.74 | `uncertain` | Uncertain |
-| ≥ 0.75 | `ai` | High-confidence AI |
+| 0.40 – 0.72 | `uncertain` | Uncertain |
+| ≥ 0.73 | `ai` | High-confidence AI |
 
 **Design rationale:** The uncertain band covers 35 percentage points deliberately. A false positive — labeling a human's work as AI-generated — is worse than a false negative on a writing platform. The wide uncertain band ensures that ambiguous cases never receive an accusatory label. A score must reach 0.75 before the system will confidently accuse a piece of AI authorship.
 

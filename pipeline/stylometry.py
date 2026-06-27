@@ -68,11 +68,21 @@ def score(text: str) -> dict:
     # Higher avg word length → AI (human ~4.5, AI ~5.2)
     wl_score = min(1.0, max(0.0, (avg_wl - 4.0) / 2.5))
 
+    # TTR is unreliable on short texts (< ~150 words) because almost no words repeat,
+    # making all short texts score TTR > 0.75 regardless of authorship. On short inputs,
+    # shift its weight to AWL, which reliably separates AI (formal, long words) from
+    # casual human writing on any length text.
+    word_count = len(words)
+    if word_count < 150:
+        w_variance, w_ttr, w_punct, w_awl = 0.30, 0.10, 0.20, 0.40
+    else:
+        w_variance, w_ttr, w_punct, w_awl = 0.35, 0.35, 0.15, 0.15
+
     ai_probability = (
-        0.35 * variance_score
-        + 0.35 * ttr_score
-        + 0.15 * punct_score
-        + 0.15 * wl_score
+        w_variance * variance_score
+        + w_ttr * ttr_score
+        + w_punct * punct_score
+        + w_awl * wl_score
     )
     ai_probability = max(0.0, min(1.0, ai_probability))
 
