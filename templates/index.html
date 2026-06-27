@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Provenance Guard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f5f5f3;
+    --surface: #ffffff;
+    --surface-2: #f9f9f7;
+    --border: rgba(0,0,0,0.08);
+    --border-strong: rgba(0,0,0,0.14);
+    --text: #1a1a1f;
+    --text-muted: #6b6b7a;
+    --text-dim: #a0a0b0;
+    --accent: #5b4cf5;
+    --accent-bg: rgba(91,76,245,0.08);
+    --green: #0e7a53;
+    --green-bg: rgba(14,122,83,0.08);
+    --amber: #92580a;
+    --amber-bg: rgba(146,88,10,0.08);
+    --red: #b33030;
+    --red-bg: rgba(179,48,48,0.08);
+    --radius: 10px;
+    --radius-sm: 6px;
+    --mono: 'JetBrains Mono', monospace;
+    --sans: 'Inter', system-ui, sans-serif;
+  }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    line-height: 1.6;
+  }
+
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+    display: flex;
+    align-items: center;
+    height: 56px;
+    gap: 1rem;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 600;
+    font-size: 15px;
+    letter-spacing: -0.01em;
+  }
+
+  .logo-icon {
+    width: 28px;
+    height: 28px;
+    background: var(--accent);
+    border-radius: 7px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+  }
+
+  nav {
+    display: flex;
+    gap: 2px;
+    margin-left: auto;
+  }
+
+  nav button {
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-muted);
+    background: none;
+    border: none;
+    padding: 6px 14px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: color 0.15s, background 0.15s;
+  }
+
+  nav button:hover { color: var(--text); background: rgba(255,255,255,0.05); }
+  nav button.active { color: var(--text); background: rgba(255,255,255,0.08); }
+
+  main {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 2.5rem 2rem;
+  }
+
+  .page { display: none; }
+  .page.active { display: block; }
+
+  .page-title {
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    margin-bottom: 6px;
+  }
+
+  .page-subtitle {
+    font-size: 14px;
+    color: var(--text-muted);
+    margin-bottom: 2rem;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .card-title {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 1rem;
+  }
+
+  textarea {
+    width: 100%;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 14px;
+    line-height: 1.7;
+    padding: 14px;
+    resize: vertical;
+    min-height: 160px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  textarea:focus { border-color: var(--accent); }
+  textarea::placeholder { color: var(--text-dim); }
+
+  input[type="text"] {
+    width: 100%;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 14px;
+    padding: 10px 14px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  input[type="text"]:focus { border-color: var(--accent); }
+  input[type="text"]::placeholder { color: var(--text-dim); }
+
+  label {
+    display: block;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+  }
+
+  .field { margin-bottom: 1rem; }
+
+  .btn {
+    font-family: var(--sans);
+    font-size: 14px;
+    font-weight: 500;
+    padding: 10px 20px;
+    border-radius: var(--radius-sm);
+    border: none;
+    cursor: pointer;
+    transition: opacity 0.15s, transform 0.1s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .btn:active { transform: scale(0.98); }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+  }
+
+  .btn-primary:hover:not(:disabled) { opacity: 0.9; }
+
+  .btn-ghost {
+    background: rgba(255,255,255,0.06);
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+
+  .btn-ghost:hover:not(:disabled) { background: rgba(255,255,255,0.1); }
+
+  .spinner {
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    display: none;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .result-panel {
+    display: none;
+    margin-top: 1.25rem;
+  }
+
+  .label-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 1rem;
+  }
+
+  .label-badge.human { background: var(--green-bg); color: var(--green); border: 1px solid rgba(52,211,153,0.2); }
+  .label-badge.ai { background: var(--red-bg); color: var(--red); border: 1px solid rgba(248,113,113,0.2); }
+  .label-badge.uncertain { background: var(--amber-bg); color: var(--amber); border: 1px solid rgba(251,191,36,0.2); }
+
+  .label-text {
+    font-size: 14px;
+    color: var(--text-muted);
+    margin-bottom: 1rem;
+    line-height: 1.7;
+  }
+
+  .confidence-bar-wrap {
+    margin-bottom: 1.5rem;
+  }
+
+  .confidence-bar-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+  }
+
+  .confidence-bar-track {
+    height: 6px;
+    background: var(--surface-2);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .confidence-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .signals-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+
+  .signal-card {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 12px;
+  }
+
+  .signal-name {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+  }
+
+  .signal-score {
+    font-family: var(--mono);
+    font-size: 22px;
+    font-weight: 500;
+  }
+
+  .signal-desc {
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-top: 4px;
+  }
+
+  .content-id-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 10px 14px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 1rem;
+  }
+
+  .copy-btn {
+    margin-left: auto;
+    font-size: 11px;
+    font-family: var(--sans);
+    background: rgba(255,255,255,0.06);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    padding: 3px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+
+  .copy-btn:hover { color: var(--text); }
+
+  .appeal-section { margin-top: 1rem; }
+
+  .error-msg {
+    background: var(--red-bg);
+    border: 1px solid rgba(248,113,113,0.2);
+    color: var(--red);
+    border-radius: var(--radius-sm);
+    padding: 10px 14px;
+    font-size: 13px;
+    margin-top: 1rem;
+    display: none;
+  }
+
+  .success-msg {
+    background: var(--green-bg);
+    border: 1px solid rgba(52,211,153,0.2);
+    color: var(--green);
+    border-radius: var(--radius-sm);
+    padding: 10px 14px;
+    font-size: 13px;
+    margin-top: 1rem;
+    display: none;
+  }
+
+  .log-entry {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem 1.25rem;
+    margin-bottom: 10px;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 12px;
+    align-items: start;
+  }
+
+  .log-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-top: 6px;
+    flex-shrink: 0;
+  }
+
+  .log-dot.human { background: var(--green); }
+  .log-dot.ai { background: var(--red); }
+  .log-dot.uncertain { background: var(--amber); }
+
+  .log-meta {
+    font-size: 11px;
+    color: var(--text-dim);
+    font-family: var(--mono);
+    text-align: right;
+  }
+
+  .log-creator { font-weight: 500; font-size: 13px; margin-bottom: 3px; }
+
+  .log-id {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+  }
+
+  .log-scores {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+
+  .status-pill {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 500;
+    padding: 2px 8px;
+    border-radius: 20px;
+    margin-top: 4px;
+  }
+
+  .status-pill.classified { background: rgba(124,109,250,0.15); color: var(--accent); }
+  .status-pill.under_review { background: var(--amber-bg); color: var(--amber); }
+
+  .analytics-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-bottom: 1.25rem;
+  }
+
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.25rem;
+  }
+
+  .stat-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+  }
+
+  .stat-value {
+    font-size: 28px;
+    font-weight: 600;
+    letter-spacing: -0.03em;
+    font-family: var(--mono);
+  }
+
+  .attr-bars { margin-top: 1rem; }
+
+  .attr-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+    font-size: 13px;
+  }
+
+  .attr-label { width: 70px; color: var(--text-muted); }
+
+  .attr-track {
+    flex: 1;
+    height: 4px;
+    background: var(--surface-2);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .attr-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.5s ease;
+  }
+
+  .attr-count { width: 28px; text-align: right; color: var(--text-muted); font-family: var(--mono); font-size: 12px; }
+
+  .empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--text-dim);
+    font-size: 14px;
+  }
+
+  .divider {
+    height: 1px;
+    background: var(--border);
+    margin: 1.25rem 0;
+  }
+
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">🛡</div>
+    Provenance Guard
+  </div>
+  <nav>
+    <button class="active" onclick="showPage('submit', this)">Analyze</button>
+    <button onclick="showPage('log', this)">Audit log</button>
+    <button onclick="showPage('analytics', this)">Analytics</button>
+  </nav>
+</header>
+
+<main>
+
+  <!-- ── Analyze page ── -->
+  <div class="page active" id="page-submit">
+    <p class="page-title">Content analysis</p>
+    <p class="page-subtitle">Submit a piece of writing to classify its likely authorship.</p>
+
+    <div class="card">
+      <div class="card-title">Submission</div>
+      <div class="field">
+        <label>Content</label>
+        <textarea id="content-input" placeholder="Paste a poem, essay, story excerpt, or blog post…"></textarea>
+      </div>
+      <div class="two-col">
+        <div class="field">
+          <label>Creator ID <span style="color:var(--text-dim)">(optional)</span></label>
+          <input type="text" id="creator-input" placeholder="e.g. poet-jane">
+        </div>
+        <div style="display:flex;align-items:flex-end;padding-bottom:1rem">
+          <button class="btn btn-primary" id="submit-btn" onclick="submitContent()">
+            <span class="spinner" id="submit-spinner"></span>
+            <span id="submit-label">Analyze</span>
+          </button>
+        </div>
+      </div>
+      <div class="error-msg" id="submit-error"></div>
+    </div>
+
+    <div class="result-panel card" id="result-panel">
+      <div class="card-title">Result</div>
+
+      <div id="label-badge" class="label-badge"></div>
+      <p id="label-explanation" class="label-text"></p>
+      <p id="label-note" style="font-size:13px;color:var(--text-dim);margin-bottom:1.25rem;font-style:italic;"></p>
+
+      <div class="confidence-bar-wrap">
+        <div class="confidence-bar-label">
+          <span>AI probability</span>
+          <span id="confidence-pct"></span>
+        </div>
+        <div class="confidence-bar-track">
+          <div class="confidence-bar-fill" id="confidence-bar" style="width:0%"></div>
+        </div>
+      </div>
+
+      <div class="signals-grid">
+        <div class="signal-card">
+          <div class="signal-name">LLM</div>
+          <div class="signal-score" id="sig-llm">—</div>
+          <div class="signal-desc">Semantic coherence</div>
+        </div>
+        <div class="signal-card">
+          <div class="signal-name">Stylometry</div>
+          <div class="signal-score" id="sig-stylo">—</div>
+          <div class="signal-desc">Surface statistics</div>
+        </div>
+        <div class="signal-card">
+          <div class="signal-name">Burstiness</div>
+          <div class="signal-score" id="sig-burst">—</div>
+          <div class="signal-desc">Complexity variance</div>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="card-title">Content ID</div>
+      <div class="content-id-row">
+        <span id="content-id-display"></span>
+        <button class="copy-btn" onclick="copyId()">Copy</button>
+      </div>
+
+      <div class="appeal-section">
+        <div class="card-title">File an appeal</div>
+        <div class="field">
+          <label>Your reasoning</label>
+          <textarea id="appeal-input" style="min-height:80px" placeholder="Explain why you believe this classification is incorrect…"></textarea>
+        </div>
+        <button class="btn btn-ghost" id="appeal-btn" onclick="fileAppeal()">
+          <span class="spinner" id="appeal-spinner"></span>
+          <span id="appeal-label">Submit appeal</span>
+        </button>
+        <div class="error-msg" id="appeal-error"></div>
+        <div class="success-msg" id="appeal-success"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Log page ── -->
+  <div class="page" id="page-log">
+    <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:2rem">
+      <div>
+        <p class="page-title">Audit log</p>
+        <p class="page-subtitle" style="margin-bottom:0">Every attribution decision, in order.</p>
+      </div>
+      <button class="btn btn-ghost" onclick="loadLog()" style="font-size:13px">Refresh</button>
+    </div>
+    <div id="log-entries"></div>
+  </div>
+
+  <!-- ── Analytics page ── -->
+  <div class="page" id="page-analytics">
+    <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:2rem">
+      <div>
+        <p class="page-title">Analytics</p>
+        <p class="page-subtitle" style="margin-bottom:0">Detection patterns across all submissions.</p>
+      </div>
+      <button class="btn btn-ghost" onclick="loadAnalytics()" style="font-size:13px">Refresh</button>
+    </div>
+
+    <div class="analytics-grid">
+      <div class="stat-card">
+        <div class="stat-label">Total submissions</div>
+        <div class="stat-value" id="stat-total">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Average confidence</div>
+        <div class="stat-value" id="stat-conf">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Appeal rate</div>
+        <div class="stat-value" id="stat-appeal">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Signal disagreement</div>
+        <div class="stat-value" id="stat-disagree">—</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Attribution breakdown</div>
+      <div class="attr-bars" id="attr-bars"></div>
+    </div>
+  </div>
+
+</main>
+
+<script>
+  let currentContentId = null;
+
+  function showPage(name, btn) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+    document.getElementById('page-' + name).classList.add('active');
+    btn.classList.add('active');
+    if (name === 'log') loadLog();
+    if (name === 'analytics') loadAnalytics();
+  }
+
+  function colorForAttribution(attr) {
+    if (attr === 'human') return 'var(--green)';
+    if (attr === 'ai') return 'var(--red)';
+    return 'var(--amber)';
+  }
+
+  function barColorForScore(score) {
+    if (score < 0.4) return 'var(--green)';
+    if (score >= 0.73) return 'var(--red)';
+    return 'var(--amber)';
+  }
+
+  async function submitContent() {
+    const content = document.getElementById('content-input').value.trim();
+    const creatorId = document.getElementById('creator-input').value.trim() || 'anonymous';
+    const errEl = document.getElementById('submit-error');
+    errEl.style.display = 'none';
+
+    if (!content) { showError(errEl, 'Please enter some content to analyze.'); return; }
+
+    setLoading('submit-btn', 'submit-spinner', 'submit-label', true, 'Analyzing…');
+
+    try {
+      const res = await fetch('/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content, creator_id: creatorId })
+      });
+      const data = await res.json();
+
+      if (!res.ok) { showError(errEl, data.error || 'Request failed.'); return; }
+
+      renderResult(data);
+    } catch (e) {
+      showError(errEl, 'Could not reach the server. Is it running on port 5001?');
+    } finally {
+      setLoading('submit-btn', 'submit-spinner', 'submit-label', false, 'Analyze');
+    }
+  }
+
+  function renderResult(data) {
+    currentContentId = data.content_id;
+
+    const attr = data.attribution;
+    const score = data.confidence;
+    const label = data.label;
+    const signals = data.signals;
+
+    const badge = document.getElementById('label-badge');
+    badge.className = 'label-badge ' + attr;
+    const icons = { human: '✓', ai: '⚠', uncertain: '?' };
+    badge.innerHTML = `<span>${icons[attr]}</span> ${label.verdict}`;
+
+    document.getElementById('label-explanation').textContent = label.explanation;
+    document.getElementById('label-note').textContent = label.confidence_note;
+
+    const pct = Math.round(score * 100);
+    document.getElementById('confidence-pct').textContent = pct + '%';
+    const bar = document.getElementById('confidence-bar');
+    bar.style.width = pct + '%';
+    bar.style.background = barColorForScore(score);
+
+    const fmt = v => typeof v === 'number' ? v.toFixed(3) : 'N/A';
+    document.getElementById('sig-llm').textContent = fmt(signals.llm_score);
+    document.getElementById('sig-stylo').textContent = fmt(signals.stylometric_score);
+    const burstReliable = signals.burstiness_reliable;
+    document.getElementById('sig-burst').textContent = burstReliable ? fmt(signals.burstiness_score) : 'N/A';
+    document.getElementById('sig-burst').style.color = burstReliable ? 'var(--text)' : 'var(--text-dim)';
+
+    document.getElementById('content-id-display').textContent = data.content_id;
+
+    document.getElementById('appeal-input').value = '';
+    document.getElementById('appeal-error').style.display = 'none';
+    document.getElementById('appeal-success').style.display = 'none';
+
+    document.getElementById('result-panel').style.display = 'block';
+    document.getElementById('result-panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  async function fileAppeal() {
+    if (!currentContentId) return;
+    const reasoning = document.getElementById('appeal-input').value.trim();
+    const errEl = document.getElementById('appeal-error');
+    const sucEl = document.getElementById('appeal-success');
+    errEl.style.display = 'none';
+    sucEl.style.display = 'none';
+
+    if (!reasoning) { showError(errEl, 'Please describe your reasoning.'); return; }
+
+    setLoading('appeal-btn', 'appeal-spinner', 'appeal-label', true, 'Submitting…');
+
+    try {
+      const res = await fetch('/appeal', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          content_id: currentContentId,
+          creator_id: document.getElementById('creator-input').value.trim() || 'anonymous',
+          reasoning
+        })
+      });
+      const data = await res.json();
+
+      if (!res.ok) { showError(errEl, data.error || 'Appeal failed.'); return; }
+
+      sucEl.textContent = `Appeal received (ID: ${data.appeal_id.slice(0,8)}…). Status updated to "under review".`;
+      sucEl.style.display = 'block';
+      document.getElementById('appeal-input').value = '';
+    } catch (e) {
+      showError(errEl, 'Could not reach the server.');
+    } finally {
+      setLoading('appeal-btn', 'appeal-spinner', 'appeal-label', false, 'Submit appeal');
+    }
+  }
+
+  async function loadLog() {
+    const container = document.getElementById('log-entries');
+    container.innerHTML = '<div class="empty-state">Loading…</div>';
+    try {
+      const res = await fetch('/log?limit=20');
+      const data = await res.json();
+      if (!data.entries.length) {
+        container.innerHTML = '<div class="empty-state">No entries yet. Submit some content to get started.</div>';
+        return;
+      }
+      container.innerHTML = data.entries.map(e => {
+        const ts = new Date(e.timestamp).toLocaleString();
+        const scores = `LLM ${e.llm_score?.toFixed(3)} · Stylo ${e.stylometric_score?.toFixed(3)} · Burst ${e.burstiness_score?.toFixed(3)}`;
+        const appealBadge = e.appeal_id ? `<span class="status-pill under_review">under review</span>` : `<span class="status-pill classified">classified</span>`;
+        return `
+          <div class="log-entry">
+            <div class="log-dot ${e.attribution}" style="margin-top:5px"></div>
+            <div>
+              <div class="log-creator">${e.creator_id || 'anonymous'}</div>
+              <div class="log-id">${e.content_id}</div>
+              <div class="log-scores">${scores}</div>
+              ${e.appeal_reasoning ? `<div style="font-size:12px;color:var(--text-muted);margin-top:6px;font-style:italic">"${e.appeal_reasoning.slice(0,120)}${e.appeal_reasoning.length > 120 ? '…' : ''}"</div>` : ''}
+              ${appealBadge}
+            </div>
+            <div class="log-meta">
+              <div style="font-size:18px;font-weight:600;color:${colorForAttribution(e.attribution)}">${(e.confidence * 100).toFixed(0)}%</div>
+              <div>${e.attribution}</div>
+              <div style="margin-top:4px">${ts}</div>
+            </div>
+          </div>`;
+      }).join('');
+    } catch {
+      container.innerHTML = '<div class="empty-state">Could not load log. Is the server running?</div>';
+    }
+  }
+
+  async function loadAnalytics() {
+    try {
+      const res = await fetch('/analytics');
+      const d = await res.json();
+
+      document.getElementById('stat-total').textContent = d.total_submissions;
+      document.getElementById('stat-conf').textContent = (d.avg_confidence * 100).toFixed(1) + '%';
+      document.getElementById('stat-appeal').textContent = d.appeal_rate_pct.toFixed(1) + '%';
+      document.getElementById('stat-disagree').textContent = d.signal_disagreement_rate_pct.toFixed(1) + '%';
+
+      const counts = d.attribution_counts;
+      const total = d.total_submissions || 1;
+      const bars = [
+        { key: 'human', label: 'Human', color: 'var(--green)' },
+        { key: 'uncertain', label: 'Unclear', color: 'var(--amber)' },
+        { key: 'ai', label: 'AI', color: 'var(--red)' },
+      ];
+      document.getElementById('attr-bars').innerHTML = bars.map(b => `
+        <div class="attr-row">
+          <span class="attr-label">${b.label}</span>
+          <div class="attr-track">
+            <div class="attr-fill" style="width:${Math.round((counts[b.key] || 0) / total * 100)}%;background:${b.color}"></div>
+          </div>
+          <span class="attr-count">${counts[b.key] || 0}</span>
+        </div>`).join('');
+    } catch {
+      document.getElementById('stat-total').textContent = '—';
+    }
+  }
+
+  function copyId() {
+    if (currentContentId) {
+      navigator.clipboard.writeText(currentContentId);
+      const btn = document.querySelector('.copy-btn');
+      btn.textContent = 'Copied';
+      setTimeout(() => btn.textContent = 'Copy', 1500);
+    }
+  }
+
+  function showError(el, msg) {
+    el.textContent = msg;
+    el.style.display = 'block';
+  }
+
+  function setLoading(btnId, spinnerId, labelId, loading, labelText) {
+    document.getElementById(btnId).disabled = loading;
+    document.getElementById(spinnerId).style.display = loading ? 'block' : 'none';
+    document.getElementById(labelId).textContent = labelText;
+  }
+</script>
+</body>
+</html>

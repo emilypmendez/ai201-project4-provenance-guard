@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 
@@ -22,6 +22,11 @@ limiter = Limiter(
 )
 
 audit_log.init_db()
+
+
+@app.route("/", methods=["GET"])
+def index():
+    return render_template("index.html")
 
 
 def _now():
